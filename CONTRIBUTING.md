@@ -1,7 +1,7 @@
 # Contributors guidelines
 
 This document summarizes the most important points for people interested in
-contributing to Godot, especially via bug reports or pull requests.
+contributing to Cauldot, especially via bug reports or pull requests.
 
 The Godot documentation has a dedicated [Contributing section](https://docs.godotengine.org/en/latest/contributing/how_to_contribute.html)
 which details these points and more, and is a recommended read.
@@ -20,16 +20,16 @@ Report bugs [here](https://github.com/godotengine/godot/issues/new?assignees=&la
 Please follow the instructions in the template when you do.
 
 Notably, please include a Minimal Reproduction Project (MRP), which is a small
-Godot project which reproduces the issue, with no unnecessary files included.
+Cauldot project which reproduces the issue, with no unnecessary files included.
 Be sure to not include the `.godot` folder in the archive to save space.
 
-Make sure that the bug you are experiencing is reproducible in the latest Godot
-releases. You can find an overview of all Godot releases [on the website](https://godotengine.org/download/archive/)
+Make sure that the bug you are experiencing is reproducible in the latest Cauldot
+releases. You can find all releases on the Releases page of this repo
 to confirm whether your current version is the latest one. It's worth testing
 against both the latest stable release and the latest dev snapshot for the next
-Godot release.
+Cauldot release.
 
-If you run into a bug which wasn't present in an earlier Godot version (what we
+If you run into a bug which wasn't present in an earlier Cauldot version (what we
 call a _regression_), please mention it and clarify which versions you tested
 (both the one(s) working and the one(s) exhibiting the bug).
 
@@ -125,12 +125,12 @@ description is also manually wrapped at 80 chars for readability):
 ```text
 Prevent French fries carbonization by fixing heat regulation
 
-When using the French fries frying module, Godot would not regulate the heat
+When using the French fries frying module, Cauldot would not regulate the heat
 and thus bring the oil bath to supercritical liquid conditions, thus causing
 unwanted side effects in the physics engine.
 
 By fixing the regulation system via an added binding to the internal feature,
-this commit now ensures that Godot will not go past the ebullition temperature
+this commit now ensures that Cauldot will not go past the ebullition temperature
 of cooking oil under normal atmospheric conditions.
 ```
 
@@ -177,13 +177,10 @@ existing tests as well.
 See [Unit testing](https://docs.godotengine.org/en/latest/contributing/development/core_and_modules/unit_testing.html)
 for information on writing tests in Godot's C++ codebase.
 
-## Contributing to Godot translations
+## Contributing to Cauldot translations
 
-You can contribute to Godot translations on [Hosted Weblate](https://hosted.weblate.org/projects/godot-engine/),
-an open source and web-based translation platform.
-
-Please refer to our [editor and documentation localization guidelines](https://docs.godotengine.org/en/latest/contributing/documentation/editor_and_docs_localization.html)
-for an overview of the translation resources and what they correspond to.
+We are currently not accepting translation contributions at this time, but you can still contribute to translating Godot.
+You can find out how on the original repo's file of the same name under the heading "Contributing to translations."
 
 ## Communicating with developers
 
@@ -195,19 +192,19 @@ To communicate with developers (e.g. to discuss a feature you want to implement
 or a bug you want to fix), the following channels can be used:
 
 - [Godot Contributors Chat](https://chat.godotengine.org): You will
-  find most core developers there, so it's the go-to platform for direct chat
+  find most of Godot's developers there, so it's the go-to platform for direct chat
   about Godot Engine development. Browse the [Directory](https://chat.godotengine.org/directory/channels)
   for an overview of public channels focusing on various engine areas which you
   might be interested in.
-- [Bug tracker](https://github.com/godotengine/godot/issues): If there is an
+- [Bug tracker](https://github.com/tsmckinney/cauldot/issues): If there is an
   existing issue about a topic you want to discuss, you can participate directly.
   If not, you can open a new issue. Please mind the guidelines outlined above
   for bug reporting.
 - [Feature proposals](https://github.com/godotengine/godot-proposals/issues):
-  To propose a new feature, we have a dedicated issue tracker for that. Don't
+  To propose a new feature for Godot, they have a dedicated issue tracker for that. Don't
   hesitate to start by talking about your idea on the Godot Contributors Chat
   to make sure that it makes sense in Godot's context.
 
 Thanks for your interest in contributing!
 
-—The Godot development team
+-Cauldot development team
