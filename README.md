@@ -34,6 +34,19 @@ titles.
 
 ![Screenshot of a 3D scene in the editor of the original engine](https://raw.githubusercontent.com/godotengine/godot-design/master/screenshots/editor_tps_demo_1920x1080.jpg)
 
+## Why I forked this
+
+I mainly forked this as a community version of Godot that isn't as 
+politically focused. Goals I have in mind include creative coding, 
+features requested by the community, and other things. What that means
+is I want to make the engine more expressive and community-focused.
+
+### Why it's called Cauldot
+
+I picked this name because of the possibilities of what could be "brewed"
+up in the engine. It's also kinda witchy. (Now add just a dash of
+GDScript... :D)
+
 ## Getting the engine
 
 ### Binary downloads
