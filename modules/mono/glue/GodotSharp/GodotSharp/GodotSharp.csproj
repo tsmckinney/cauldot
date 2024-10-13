@@ -13,8 +13,8 @@
     <AnalysisMode>Recommended</AnalysisMode>
   </PropertyGroup>
   <PropertyGroup>
-    <Description>Godot C# Core API.</Description>
-    <Authors>Godot Engine contributors</Authors>
+    <Description>Cauldot C# Core API.</Description>
+    <Authors>Cauldot Engine contributors</Authors>
 
     <PackageId>GodotSharp</PackageId>
     <Version>4.4.0</Version>

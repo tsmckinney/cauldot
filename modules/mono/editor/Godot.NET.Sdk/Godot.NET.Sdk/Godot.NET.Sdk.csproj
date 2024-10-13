@@ -4,7 +4,7 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 
     <Description>MSBuild .NET Sdk for Godot projects.</Description>
-    <Authors>Godot Engine contributors</Authors>
+    <Authors>Cauldot Engine contributors</Authors>
 
     <PackageId>Godot.NET.Sdk</PackageId>
     <Version>4.4.0</Version>

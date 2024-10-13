@@ -5272,7 +5272,7 @@ void GLTFDocument::_convert_scene_node(Ref<GLTFState> p_state, Node *p_current, 
 	} else if (cast_to<Skeleton3D>(p_current)) {
 		Skeleton3D *skel = cast_to<Skeleton3D>(p_current);
 		_convert_skeleton_to_gltf(skel, p_state, p_gltf_parent, p_gltf_root, gltf_node);
-		// We ignore the Godot Engine node that is the skeleton.
+		// We ignore the Cauldot Engine node that is the skeleton.
 		return;
 	} else if (cast_to<MultiMeshInstance3D>(p_current)) {
 		MultiMeshInstance3D *multi = cast_to<MultiMeshInstance3D>(p_current);

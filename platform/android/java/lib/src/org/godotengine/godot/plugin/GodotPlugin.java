@@ -95,7 +95,7 @@ public abstract class GodotPlugin {
 	}
 
 	/**
-	 * Provides access to the Godot engine.
+	 * Provides access to the Cauldot engine.
 	 */
 	protected Godot getGodot() {
 		return godot;
@@ -216,7 +216,7 @@ public abstract class GodotPlugin {
 	public boolean onMainBackPressed() { return false; }
 
 	/**
-	 * Invoked on the render thread when set up of the Godot engine is complete.
+	 * Invoked on the render thread when set up of the Cauldot engine is complete.
 	 * <p>
 	 * This is invoked before {@link GodotPlugin#onGodotMainLoopStarted()}.
 	 */
@@ -367,7 +367,7 @@ public abstract class GodotPlugin {
 	/**
 	 * Emit a Godot signal.
 	 * @param godot Godot instance
-	 * @param pluginName Name of the Godot plugin the signal will be emitted from. The plugin must already be registered with the Godot engine.
+	 * @param pluginName Name of the Godot plugin the signal will be emitted from. The plugin must already be registered with the Cauldot engine.
 	 * @param signalInfo Information about the signal to emit.
 	 * @param signalArgs Arguments used to populate the emitted signal. The arguments will be validated against the given {@link SignalInfo} parameter.
 	 */

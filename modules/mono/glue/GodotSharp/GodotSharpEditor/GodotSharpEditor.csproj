@@ -11,8 +11,8 @@
     <LangVersion>10</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <Description>Godot C# Editor API.</Description>
-    <Authors>Godot Engine contributors</Authors>
+    <Description>Cauldot C# Editor API.</Description>
+    <Authors>Cauldot Engine contributors</Authors>
 
     <PackageId>GodotSharpEditor</PackageId>
     <Version>4.4.0</Version>

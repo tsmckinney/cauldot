@@ -6,7 +6,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <Description>Core C# source generator for Godot projects.</Description>
-    <Authors>Godot Engine contributors</Authors>
+    <Authors>Cauldot Engine contributors</Authors>
 
     <PackageId>Godot.SourceGenerators</PackageId>
     <Version>4.4.0</Version>

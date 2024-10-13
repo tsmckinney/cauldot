@@ -62,7 +62,7 @@ import kotlin.math.min
  *
  * This provides the basic templates for the activities making up this application.
  * Each derived activity runs in its own process, which enable up to have several instances of
- * the Godot engine up and running at the same time.
+ * the Cauldot engine up and running at the same time.
  */
 abstract class BaseGodotEditor : GodotActivity() {
 

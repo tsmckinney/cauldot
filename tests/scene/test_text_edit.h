@@ -6436,7 +6436,7 @@ TEST_CASE("[SceneTree][TextEdit] versioning") {
 	CHECK(text_edit->get_saved_version() == 0);
 
 	SUBCASE("[TextEdit] versioning selection") {
-		text_edit->set_text("Godot Engine\nWaiting for Godot\nTest Text for multi carat\nLine 4 Text");
+		text_edit->set_text("Cauldot Engine\nWaiting for Cauldot\nTest Text for multi carat\nLine 4 Text");
 		text_edit->set_multiple_carets_enabled(true);
 
 		text_edit->remove_secondary_carets();

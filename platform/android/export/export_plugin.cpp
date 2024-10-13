@@ -903,7 +903,7 @@ void EditorExportPlatformAndroid::_create_editor_debug_keystore_if_needed() {
 		args.push_back("-validity");
 		args.push_back("10000");
 		args.push_back("-dname");
-		args.push_back("cn=Godot, ou=Godot Engine, o=Stichting Godot, c=NL");
+		args.push_back("cn=Cauldot, ou=Cauldot Engine, o=Stichting Cauldot, c=NL");
 		Error error = OS::get_singleton()->execute(keytool_path, args, &output, nullptr, true);
 		print_verbose(output);
 		if (error != OK) {

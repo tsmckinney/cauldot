@@ -204,7 +204,7 @@ class Godot(private val context: Context) {
 	private fun requireActivity() = getActivity() ?: throw IllegalStateException("Host activity must be non-null")
 
 	/**
-	 * Start initialization of the Godot engine.
+	 * Start initialization of the Cauldot engine.
 	 *
 	 * This must be followed by [onInitNativeLayer] and [onInitRenderView] in that order to complete
 	 * initialization of the engine.
@@ -375,7 +375,7 @@ class Godot(private val context: Context) {
 	fun isInImmersiveMode() = useImmersive.get()
 
 	/**
-	 * Initializes the native layer of the Godot engine.
+	 * Initializes the native layer of the Cauldot engine.
 	 *
 	 * This must be preceded by [onCreate] and followed by [onInitRenderView] to complete
 	 * initialization of the engine.
@@ -423,9 +423,9 @@ class Godot(private val context: Context) {
 			if (nativeLayerInitializeCompleted && !nativeLayerSetupCompleted) {
 				nativeLayerSetupCompleted = GodotLib.setup(commandLine.toTypedArray(), tts)
 				if (!nativeLayerSetupCompleted) {
-					throw IllegalStateException("Unable to setup the Godot engine! Aborting...")
+					throw IllegalStateException("Unable to setup the Cauldot engine! Aborting...")
 				} else {
-					Log.v(TAG, "Godot native layer setup completed")
+					Log.v(TAG, "Cauldot native layer setup completed")
 				}
 			}
 		} finally {
@@ -877,7 +877,7 @@ class Godot(private val context: Context) {
 	}
 
 	/**
-	 * Destroys the Godot Engine and kill the process it's running in.
+	 * Destroys the Cauldot Engine and kill the process it's running in.
 	 */
 	@JvmOverloads
 	fun destroyAndKillProcess(destroyRunnable: Runnable? = null) {
