@@ -51,7 +51,9 @@ suitable for the main repository.
 ### Where I hope to go right now
 Goals I have in mind include creative coding, 
 features requested by the community, and other things. What that means
-is I want to make the engine more expressive and community-focused.
+is I want to add expressivity and stuff you'd like to have into this fork.
+Please note this will also be my/our own experimental fork, so not many
+features will fit well into the original engine.
 
 ### Why it's called Cauldot
 
