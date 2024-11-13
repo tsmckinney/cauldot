@@ -36,8 +36,20 @@ titles.
 
 ## Why I forked this
 
-I mainly forked this as a community version of Godot that isn't as 
-politically focused. Goals I have in mind include creative coding, 
+I forked this out of love for Godot and the willingness to add features
+lots of people would like. This is also because of the "woke" situation
+going on with Godot. However, I'd like to clarify that I was not involved 
+with the abuse and harassment that came with Godot posting their "Apparently 
+Game Engines Are Woke Now" tweet. I, in fact, [also](https://x.com/godotfoundation/status/1840721449364988300) strongly condemn these waves
+of abuse. So, I wanted to make Cauldot a safe, community-driven space that's 
+happy to be its own kind of woke. ( ;) ) Let's encourage respect and kindness 
+with this fork instead of the toxicity previously directed at Godot.
+
+Also, I'm also not sure that some/most of the features I'd like to add would be 
+suitable for the main repository.
+
+### Where I hope to go right now
+Goals I have in mind include creative coding, 
 features requested by the community, and other things. What that means
 is I want to make the engine more expressive and community-focused.
 
