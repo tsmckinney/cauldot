@@ -32,6 +32,7 @@
 #include "rendering_device.compat.inc"
 
 #include "rendering_device_binds.h"
+#include "shader_include_db.h"
 
 #include "core/config/project_settings.h"
 #include "core/io/dir_access.h"
@@ -189,6 +190,10 @@ void RenderingDevice::_free_dependencies(RID p_id) {
 	}
 }
 
+/*******************************/
+/**** SHADER INFRASTRUCTURE ****/
+/*******************************/
+
 void RenderingDevice::shader_set_compile_to_spirv_function(ShaderCompileToSPIRVFunction p_function) {
 	compile_to_spirv_function = p_function;
 }
@@ -211,7 +216,7 @@ Vector<uint8_t> RenderingDevice::shader_compile_spirv_from_source(ShaderStage p_
 
 	ERR_FAIL_NULL_V(compile_to_spirv_function, Vector<uint8_t>());
 
-	return compile_to_spirv_function(p_stage, p_source_code, p_language, r_error, this);
+	return compile_to_spirv_function(p_stage, ShaderIncludeDB::parse_include_files(p_source_code), p_language, r_error, this);
 }
 
 String RenderingDevice::shader_get_spirv_cache_key() const {
@@ -747,9 +752,10 @@ RID RenderingDevice::texture_create(const TextureFormat &p_format, const Texture
 
 	if (format.texture_type == TEXTURE_TYPE_1D_ARRAY || format.texture_type == TEXTURE_TYPE_2D_ARRAY || format.texture_type == TEXTURE_TYPE_CUBE_ARRAY || format.texture_type == TEXTURE_TYPE_CUBE) {
 		ERR_FAIL_COND_V_MSG(format.array_layers < 1, RID(),
-				"Amount of layers must be equal or greater than 1 for arrays and cubemaps.");
+				"Number of layers must be equal or greater than 1 for arrays and cubemaps.");
 		ERR_FAIL_COND_V_MSG((format.texture_type == TEXTURE_TYPE_CUBE_ARRAY || format.texture_type == TEXTURE_TYPE_CUBE) && (format.array_layers % 6) != 0, RID(),
 				"Cubemap and cubemap array textures must provide a layer number that is multiple of 6");
+		ERR_FAIL_COND_V_MSG(format.array_layers > driver->limit_get(LIMIT_MAX_TEXTURE_ARRAY_LAYERS), RID(), "Number of layers exceeds device maximum.");
 	} else {
 		format.array_layers = 1;
 	}
@@ -760,6 +766,28 @@ RID RenderingDevice::texture_create(const TextureFormat &p_format, const Texture
 
 	format.height = format.texture_type != TEXTURE_TYPE_1D && format.texture_type != TEXTURE_TYPE_1D_ARRAY ? format.height : 1;
 	format.depth = format.texture_type == TEXTURE_TYPE_3D ? format.depth : 1;
+
+	uint64_t size_max = 0;
+	switch (format.texture_type) {
+		case TEXTURE_TYPE_1D:
+		case TEXTURE_TYPE_1D_ARRAY:
+			size_max = driver->limit_get(LIMIT_MAX_TEXTURE_SIZE_1D);
+			break;
+		case TEXTURE_TYPE_2D:
+		case TEXTURE_TYPE_2D_ARRAY:
+			size_max = driver->limit_get(LIMIT_MAX_TEXTURE_SIZE_2D);
+			break;
+		case TEXTURE_TYPE_CUBE:
+		case TEXTURE_TYPE_CUBE_ARRAY:
+			size_max = driver->limit_get(LIMIT_MAX_TEXTURE_SIZE_CUBE);
+			break;
+		case TEXTURE_TYPE_3D:
+			size_max = driver->limit_get(LIMIT_MAX_TEXTURE_SIZE_3D);
+			break;
+		case TEXTURE_TYPE_MAX:
+			break;
+	}
+	ERR_FAIL_COND_V_MSG(format.width > size_max || format.height > size_max || format.depth > size_max, RID(), "Texture dimensions exceed device maximum.");
 
 	uint32_t required_mipmaps = get_image_required_mipmaps(format.width, format.height, format.depth);
 
@@ -3058,7 +3086,12 @@ void RenderingDevice::_uniform_set_update_shared(UniformSet *p_uniform_set) {
 	}
 }
 
-RID RenderingDevice::uniform_set_create(const Vector<Uniform> &p_uniforms, RID p_shader, uint32_t p_shader_set) {
+template RID RenderingDevice::uniform_set_create(const LocalVector<RD::Uniform> &p_uniforms, RID p_shader, uint32_t p_shader_set);
+
+template RID RenderingDevice::uniform_set_create(const Vector<RD::Uniform> &p_uniforms, RID p_shader, uint32_t p_shader_set);
+
+template <typename Collection>
+RID RenderingDevice::uniform_set_create(const Collection &p_uniforms, RID p_shader, uint32_t p_shader_set) {
 	_THREAD_SAFE_METHOD_
 
 	ERR_FAIL_COND_V(p_uniforms.is_empty(), RID());

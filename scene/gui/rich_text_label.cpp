@@ -364,7 +364,8 @@ float RichTextLabel::_resize_line(ItemFrame *p_frame, int p_line, const Ref<Font
 	Line &l = p_frame->lines[p_line];
 	MutexLock lock(l.text_buf->get_mutex());
 
-	l.offset.x = _find_margin(l.from, p_base_font, p_base_font_size) + l.prefix_width;
+	l.indent = _find_margin(l.from, p_base_font, p_base_font_size) + l.prefix_width;
+	l.offset.x = l.indent;
 	l.text_buf->set_width(p_width - l.offset.x);
 
 	PackedFloat32Array tab_stops = _find_tab_stops(l.from);
@@ -501,7 +502,8 @@ float RichTextLabel::_shape_line(ItemFrame *p_frame, int p_line, const Ref<Font>
 	}
 
 	// Add indent.
-	l.offset.x = _find_margin(l.from, p_base_font, p_base_font_size) + l.prefix_width;
+	l.indent = _find_margin(l.from, p_base_font, p_base_font_size) + l.prefix_width;
+	l.offset.x = l.indent;
 	l.text_buf->set_width(p_width - l.offset.x);
 	l.text_buf->set_alignment(_find_alignment(l.from));
 	l.text_buf->set_direction(_find_direction(l.from));
@@ -625,8 +627,8 @@ float RichTextLabel::_shape_line(ItemFrame *p_frame, int p_line, const Ref<Font>
 						t_char_count += cell_ch;
 						remaining_characters -= cell_ch;
 
-						table->columns[column].min_width = MAX(table->columns[column].min_width, ceil(frame->lines[i].text_buf->get_size().x));
-						table->columns[column].max_width = MAX(table->columns[column].max_width, ceil(frame->lines[i].text_buf->get_non_wrapped_size().x));
+						table->columns[column].min_width = MAX(table->columns[column].min_width, frame->lines[i].indent + ceil(frame->lines[i].text_buf->get_size().x));
+						table->columns[column].max_width = MAX(table->columns[column].max_width, frame->lines[i].indent + ceil(frame->lines[i].text_buf->get_non_wrapped_size().x));
 					}
 					idx++;
 				}
@@ -977,6 +979,7 @@ int RichTextLabel::_draw_line(ItemFrame *p_frame, int p_line, const Vector2 &p_o
 
 									if (frame->lines.size() != 0 && row < row_count) {
 										Vector2 coff = frame->lines[0].offset;
+										coff.x -= frame->lines[0].indent;
 										if (rtl) {
 											coff.x = rect.size.width - table->columns[col].width - coff.x;
 										}
@@ -2311,10 +2314,13 @@ String RichTextLabel::get_tooltip(const Point2 &p_pos) const {
 
 	String description;
 	if (c_item && !outside) {
+		ItemMeta *meta = nullptr;
 		if (const_cast<RichTextLabel *>(this)->_find_hint(c_item, &description)) {
 			return description;
 		} else if (c_item->type == ITEM_IMAGE && !static_cast<ItemImage *>(c_item)->tooltip.is_empty()) {
 			return static_cast<ItemImage *>(c_item)->tooltip;
+		} else if (const_cast<RichTextLabel *>(this)->_find_meta(c_item, nullptr, &meta) && meta && !meta->tooltip.is_empty()) {
+			return meta->tooltip;
 		}
 	}
 
@@ -2545,6 +2551,10 @@ int RichTextLabel::_find_margin(Item *p_item, const Ref<Font> &p_base_font, int 
 	float margin = 0.0;
 
 	while (item) {
+		if (item->type == ITEM_FRAME) {
+			break;
+		}
+
 		if (item->type == ITEM_INDENT) {
 			Ref<Font> font = p_base_font;
 			int font_size = p_base_font_size;
@@ -3126,21 +3136,22 @@ void RichTextLabel::add_text(const String &p_text) {
 	}
 
 	int pos = 0;
+	String t = p_text.replace("\r\n", "\n");
 
-	while (pos < p_text.length()) {
-		int end = p_text.find_char('\n', pos);
+	while (pos < t.length()) {
+		int end = t.find_char('\n', pos);
 		String line;
 		bool eol = false;
 		if (end == -1) {
-			end = p_text.length();
+			end = t.length();
 		} else {
 			eol = true;
 		}
 
-		if (pos == 0 && end == p_text.length()) {
-			line = p_text;
+		if (pos == 0 && end == t.length()) {
+			line = t;
 		} else {
-			line = p_text.substr(pos, end - pos);
+			line = t.substr(pos, end - pos);
 		}
 
 		if (line.length() > 0) {
@@ -3181,6 +3192,10 @@ void RichTextLabel::add_text(const String &p_text) {
 void RichTextLabel::_add_item(Item *p_item, bool p_enter, bool p_ensure_newline) {
 	if (!internal_stack_editing) {
 		stack_externally_modified = true;
+	}
+
+	if (p_enter && !parsing_bbcode.load() && !tag_stack.is_empty()) {
+		tag_stack.push_back(U"?");
 	}
 
 	p_item->parent = current;
@@ -3572,7 +3587,7 @@ void RichTextLabel::push_dropcap(const String &p_string, const Ref<Font> &p_font
 	ItemDropcap *item = memnew(ItemDropcap);
 	item->owner = get_instance_id();
 	item->rid = items.make_rid(item);
-	item->text = p_string;
+	item->text = p_string.replace("\r\n", "\n");
 	item->font = p_font;
 	item->font_size = p_size;
 	item->color = p_color;
@@ -3778,7 +3793,7 @@ void RichTextLabel::push_list(int p_level, ListType p_list, bool p_capitalize, c
 	_add_item(item, true, true);
 }
 
-void RichTextLabel::push_meta(const Variant &p_meta, MetaUnderline p_underline_mode) {
+void RichTextLabel::push_meta(const Variant &p_meta, MetaUnderline p_underline_mode, const String &p_tooltip) {
 	_stop_thread();
 	MutexLock data_lock(data_mutex);
 
@@ -3788,6 +3803,7 @@ void RichTextLabel::push_meta(const Variant &p_meta, MetaUnderline p_underline_m
 	item->rid = items.make_rid(item);
 	item->meta = p_meta;
 	item->underline = p_underline_mode;
+	item->tooltip = p_tooltip;
 	_add_item(item, true);
 }
 
@@ -4060,6 +4076,9 @@ void RichTextLabel::pop() {
 		current_frame = static_cast<ItemFrame *>(current)->parent_frame;
 	}
 	current = current->parent;
+	if (!parsing_bbcode.load() && !tag_stack.is_empty()) {
+		tag_stack.pop_back();
+	}
 }
 
 void RichTextLabel::pop_context() {
@@ -4072,8 +4091,14 @@ void RichTextLabel::pop_context() {
 		if (current->type == ITEM_FRAME) {
 			current_frame = static_cast<ItemFrame *>(current)->parent_frame;
 		} else if (current->type == ITEM_CONTEXT) {
+			if (!parsing_bbcode.load() && !tag_stack.is_empty()) {
+				tag_stack.pop_back();
+			}
 			current = current->parent;
 			return;
+		}
+		if (!parsing_bbcode.load() && !tag_stack.is_empty()) {
+			tag_stack.pop_back();
 		}
 		current = current->parent;
 	}
@@ -4094,6 +4119,7 @@ void RichTextLabel::clear() {
 
 	stack_externally_modified = false;
 
+	tag_stack.clear();
 	main->_clear_children();
 	current = main;
 	current_frame = main;
@@ -4273,32 +4299,32 @@ void RichTextLabel::append_text(const String &p_bbcode) {
 	_stop_thread();
 	MutexLock data_lock(data_mutex);
 
+	parsing_bbcode.store(true);
+
 	int pos = 0;
-
-	List<String> tag_stack;
-
-	int indent_level = 0;
 
 	bool in_bold = false;
 	bool in_italics = false;
 	bool after_list_open_tag = false;
 	bool after_list_close_tag = false;
 
-	while (pos <= p_bbcode.length()) {
-		int brk_pos = p_bbcode.find_char('[', pos);
+	String bbcode = p_bbcode.replace("\r\n", "\n");
+
+	while (pos <= bbcode.length()) {
+		int brk_pos = bbcode.find_char('[', pos);
 
 		if (brk_pos < 0) {
-			brk_pos = p_bbcode.length();
+			brk_pos = bbcode.length();
 		}
 
-		String txt = brk_pos > pos ? p_bbcode.substr(pos, brk_pos - pos) : "";
+		String txt = brk_pos > pos ? bbcode.substr(pos, brk_pos - pos) : "";
 
 		// Trim the first newline character, it may be added later as needed.
 		if (after_list_close_tag || after_list_open_tag) {
 			txt = txt.trim_prefix("\n");
 		}
 
-		if (brk_pos == p_bbcode.length()) {
+		if (brk_pos == bbcode.length()) {
 			// For tags that are not properly closed.
 			if (txt.is_empty() && after_list_open_tag) {
 				txt = "\n";
@@ -4310,16 +4336,16 @@ void RichTextLabel::append_text(const String &p_bbcode) {
 			break; //nothing else to add
 		}
 
-		int brk_end = _find_unquoted(p_bbcode, ']', brk_pos + 1);
+		int brk_end = _find_unquoted(bbcode, ']', brk_pos + 1);
 
 		if (brk_end == -1) {
 			//no close, add the rest
-			txt += p_bbcode.substr(brk_pos, p_bbcode.length() - brk_pos);
+			txt += bbcode.substr(brk_pos);
 			add_text(txt);
 			break;
 		}
 
-		String tag = p_bbcode.substr(brk_pos + 1, brk_end - brk_pos - 1);
+		String tag = bbcode.substr(brk_pos + 1, brk_end - brk_pos - 1);
 		Vector<String> split_tag_block = _split_unquoted(tag, ' ');
 
 		// Find optional parameters.
@@ -4357,7 +4383,7 @@ void RichTextLabel::append_text(const String &p_bbcode) {
 				in_italics = false;
 			}
 			if ((tag_stack.front()->get() == "indent") || (tag_stack.front()->get() == "ol") || (tag_stack.front()->get() == "ul")) {
-				indent_level--;
+				current_frame->indent_level--;
 			}
 
 			if (!tag_ok) {
@@ -4630,44 +4656,44 @@ void RichTextLabel::append_text(const String &p_bbcode) {
 			pos = brk_end + 1;
 			tag_stack.push_front(tag);
 		} else if (tag == "ul") {
-			indent_level++;
-			push_list(indent_level, LIST_DOTS, false);
+			current_frame->indent_level++;
+			push_list(current_frame->indent_level, LIST_DOTS, false);
 			pos = brk_end + 1;
 			tag_stack.push_front(tag);
 		} else if (tag.begins_with("ul bullet=")) {
 			String bullet = _get_tag_value(tag);
-			indent_level++;
-			push_list(indent_level, LIST_DOTS, false, bullet);
+			current_frame->indent_level++;
+			push_list(current_frame->indent_level, LIST_DOTS, false, bullet);
 			pos = brk_end + 1;
 			tag_stack.push_front("ul");
 		} else if ((tag == "ol") || (tag == "ol type=1")) {
-			indent_level++;
-			push_list(indent_level, LIST_NUMBERS, false);
+			current_frame->indent_level++;
+			push_list(current_frame->indent_level, LIST_NUMBERS, false);
 			pos = brk_end + 1;
 			tag_stack.push_front("ol");
 		} else if (tag == "ol type=a") {
-			indent_level++;
-			push_list(indent_level, LIST_LETTERS, false);
+			current_frame->indent_level++;
+			push_list(current_frame->indent_level, LIST_LETTERS, false);
 			pos = brk_end + 1;
 			tag_stack.push_front("ol");
 		} else if (tag == "ol type=A") {
-			indent_level++;
-			push_list(indent_level, LIST_LETTERS, true);
+			current_frame->indent_level++;
+			push_list(current_frame->indent_level, LIST_LETTERS, true);
 			pos = brk_end + 1;
 			tag_stack.push_front("ol");
 		} else if (tag == "ol type=i") {
-			indent_level++;
-			push_list(indent_level, LIST_ROMAN, false);
+			current_frame->indent_level++;
+			push_list(current_frame->indent_level, LIST_ROMAN, false);
 			pos = brk_end + 1;
 			tag_stack.push_front("ol");
 		} else if (tag == "ol type=I") {
-			indent_level++;
-			push_list(indent_level, LIST_ROMAN, true);
+			current_frame->indent_level++;
+			push_list(current_frame->indent_level, LIST_ROMAN, true);
 			pos = brk_end + 1;
 			tag_stack.push_front("ol");
 		} else if (tag == "indent") {
-			indent_level++;
-			push_indent(indent_level);
+			current_frame->indent_level++;
+			push_indent(current_frame->indent_level);
 			pos = brk_end + 1;
 			tag_stack.push_front(tag);
 		} else if (tag.begins_with("lang=")) {
@@ -4777,16 +4803,44 @@ void RichTextLabel::append_text(const String &p_bbcode) {
 			pos = brk_end + 1;
 			tag_stack.push_front("p");
 		} else if (tag == "url") {
-			int end = p_bbcode.find_char('[', brk_end);
+			int end = bbcode.find_char('[', brk_end);
 			if (end == -1) {
-				end = p_bbcode.length();
+				end = bbcode.length();
 			}
-			String url = p_bbcode.substr(brk_end + 1, end - brk_end - 1).unquote();
+			String url = bbcode.substr(brk_end + 1, end - brk_end - 1).unquote();
 			push_meta(url, META_UNDERLINE_ALWAYS);
 
 			pos = brk_end + 1;
 			tag_stack.push_front(tag);
 
+		} else if (tag.begins_with("url ")) {
+			String url;
+			MetaUnderline underline = META_UNDERLINE_ALWAYS;
+			String tooltip;
+
+			OptionMap::Iterator underline_option = bbcode_options.find("underline");
+			if (underline_option) {
+				if (underline_option->value == "never") {
+					underline = META_UNDERLINE_NEVER;
+				} else if (underline_option->value == "always") {
+					underline = META_UNDERLINE_ALWAYS;
+				} else if (underline_option->value == "hover") {
+					underline = META_UNDERLINE_ON_HOVER;
+				}
+			}
+			OptionMap::Iterator tooltip_option = bbcode_options.find("tooltip");
+			if (tooltip_option) {
+				tooltip = tooltip_option->value;
+			}
+			OptionMap::Iterator href_option = bbcode_options.find("href");
+			if (href_option) {
+				url = href_option->value;
+			}
+
+			push_meta(url, underline, tooltip);
+
+			pos = brk_end + 1;
+			tag_stack.push_front("url");
 		} else if (tag.begins_with("url=")) {
 			String url = _get_tag_value(tag).unquote();
 			push_meta(url, META_UNDERLINE_ALWAYS);
@@ -4845,12 +4899,12 @@ void RichTextLabel::append_text(const String &p_bbcode) {
 				outline_color = Color::from_string(outline_color_option->value, outline_color);
 			}
 
-			int end = p_bbcode.find_char('[', brk_end);
+			int end = bbcode.find_char('[', brk_end);
 			if (end == -1) {
-				end = p_bbcode.length();
+				end = bbcode.length();
 			}
 
-			String dc_txt = p_bbcode.substr(brk_end + 1, end - brk_end - 1);
+			String dc_txt = bbcode.substr(brk_end + 1, end - brk_end - 1);
 
 			push_dropcap(dc_txt, f, fs, dropcap_margins, color, outline_size, outline_color);
 
@@ -4890,12 +4944,12 @@ void RichTextLabel::append_text(const String &p_bbcode) {
 				}
 			}
 
-			int end = p_bbcode.find_char('[', brk_end);
+			int end = bbcode.find_char('[', brk_end);
 			if (end == -1) {
-				end = p_bbcode.length();
+				end = bbcode.length();
 			}
 
-			String image = p_bbcode.substr(brk_end + 1, end - brk_end - 1);
+			String image = bbcode.substr(brk_end + 1, end - brk_end - 1);
 
 			Ref<Texture2D> texture = ResourceLoader::load(image, "Texture2D");
 			if (texture.is_valid()) {
@@ -5390,6 +5444,8 @@ void RichTextLabel::append_text(const String &p_bbcode) {
 			}
 		}
 	}
+
+	parsing_bbcode.store(false);
 }
 
 void RichTextLabel::scroll_to_selection() {
@@ -5931,7 +5987,11 @@ void RichTextLabel::set_text(const String &p_bbcode) {
 	stack_externally_modified = false;
 
 	text = p_bbcode;
-	_apply_translation();
+	if (text.is_empty()) {
+		clear();
+	} else {
+		_apply_translation();
+	}
 }
 
 void RichTextLabel::_apply_translation() {
@@ -6267,7 +6327,7 @@ void RichTextLabel::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("push_paragraph", "alignment", "base_direction", "language", "st_parser", "justification_flags", "tab_stops"), &RichTextLabel::push_paragraph, DEFVAL(TextServer::DIRECTION_AUTO), DEFVAL(""), DEFVAL(TextServer::STRUCTURED_TEXT_DEFAULT), DEFVAL(TextServer::JUSTIFICATION_WORD_BOUND | TextServer::JUSTIFICATION_KASHIDA | TextServer::JUSTIFICATION_SKIP_LAST_LINE | TextServer::JUSTIFICATION_DO_NOT_SKIP_SINGLE_LINE), DEFVAL(PackedFloat32Array()));
 	ClassDB::bind_method(D_METHOD("push_indent", "level"), &RichTextLabel::push_indent);
 	ClassDB::bind_method(D_METHOD("push_list", "level", "type", "capitalize", "bullet"), &RichTextLabel::push_list, DEFVAL(String::utf8("•")));
-	ClassDB::bind_method(D_METHOD("push_meta", "data", "underline_mode"), &RichTextLabel::push_meta, DEFVAL(META_UNDERLINE_ALWAYS));
+	ClassDB::bind_method(D_METHOD("push_meta", "data", "underline_mode", "tooltip"), &RichTextLabel::push_meta, DEFVAL(META_UNDERLINE_ALWAYS), DEFVAL(String()));
 	ClassDB::bind_method(D_METHOD("push_hint", "description"), &RichTextLabel::push_hint);
 	ClassDB::bind_method(D_METHOD("push_language", "language"), &RichTextLabel::push_language);
 	ClassDB::bind_method(D_METHOD("push_underline"), &RichTextLabel::push_underline);
@@ -6827,6 +6887,7 @@ RichTextLabel::RichTextLabel(const String &p_text) {
 	updating.store(false);
 	validating.store(false);
 	stop_thread.store(false);
+	parsing_bbcode.store(false);
 
 	set_clip_contents(true);
 }
