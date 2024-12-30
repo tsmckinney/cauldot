@@ -31,9 +31,7 @@
 #include "skeleton_3d.h"
 #include "skeleton_3d.compat.inc"
 
-#include "core/variant/type_info.h"
 #include "scene/3d/skeleton_modifier_3d.h"
-#include "scene/resources/surface_tool.h"
 #ifndef DISABLE_DEPRECATED
 #include "scene/3d/physical_bone_simulator_3d.h"
 #endif // _DISABLE_DEPRECATED
@@ -608,7 +606,7 @@ uint64_t Skeleton3D::get_version() const {
 }
 
 int Skeleton3D::add_bone(const String &p_name) {
-	ERR_FAIL_COND_V_MSG(p_name.is_empty() || p_name.contains(":") || p_name.contains("/"), -1, vformat("Bone name cannot be empty or contain ':' or '/'.", p_name));
+	ERR_FAIL_COND_V_MSG(p_name.is_empty() || p_name.contains_char(':') || p_name.contains_char('/'), -1, vformat("Bone name cannot be empty or contain ':' or '/'.", p_name));
 	ERR_FAIL_COND_V_MSG(name_to_bone_index.has(p_name), -1, vformat("Skeleton3D \"%s\" already has a bone with name \"%s\".", to_string(), p_name));
 
 	Bone b;
